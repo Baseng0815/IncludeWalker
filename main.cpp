@@ -15,35 +15,16 @@
 
 int main(int argc, char **argv)
 {
-    /*
     Parser parser {"test/src/main.cpp"};
-    Graph graph = parser.getGraph();
-    */
+    Graph &graph = parser.getGraph();
 
-    Interface interface {Graph {}};
+    Interface interface {std::move(graph)};
 
     while (interface.isOpen()) {
+        interface.draw();
         char c = getch();
-        mvprintw(1, 0, "%c\n", c);
+        interface.charInput(c);
     }
 
     return 0;
-
-    /* color_set(0, 0); */
-    /* move(curline, 0); */
-
-    /* switch (c) { */
-    /*     case 'q': */
-    /*         running = false; */
-    /*         break; */
-    /*     case 'a': */
-    /*         add_string(lines); */
-    /*         break; */
-    /*     case 'j': */
-    /*         if (curline < lines.size() - 1) curline++; */
-    /*         break; */
-    /*     case 'k': */
-    /*         if (curline > 0) curline--; */
-    /*         break; */
-    /* } */
 }

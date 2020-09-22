@@ -1,8 +1,9 @@
 #include "graph.hpp"
 
 struct InterfaceNode {
-    Node graphNode;
+    const Node *graphNode;
     bool isCollapsed;
+    int level;
 };
 
 class Interface {
@@ -11,11 +12,13 @@ class Interface {
         Graph m_graph;
 
         bool m_isOpen = true;
+        int m_cursorPos = 0;
 
-        void recalculateInterfaceNodes();
+        void recalculateInterfaceNodes(std::string_view start);
+        void addInterfaceNodes(const Node *start, int level = 0);
 
     public:
-        Interface(Graph graph);
+        Interface(Graph&& graph);
         ~Interface();
 
         void charInput(char c);
