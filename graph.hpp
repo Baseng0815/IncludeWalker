@@ -23,15 +23,17 @@ struct Node {
     NodeType nodeType;
     std::string nodeFile;
 
-    std::vector<const Node*> children;
+    // TODO add multiple parents
+    NodeId parent;
+    std::vector<NodeId> children;
 };
 
 struct Graph {
     public:
         std::vector<NodePtr> nodes;
 
-        const Node *getNodeByFile(std::string_view file);
-        const Node *getNodeById(NodeId id);
+        const Node *getNodeByFile(std::string_view file) const;
+        const Node *getNodeById(NodeId id) const;
 };
 
 class Parser {
@@ -39,10 +41,10 @@ class Parser {
         Graph m_graph;
 
         // each id is assigned a file
-        NodeId m_idCounter = 0;
+        NodeId m_idCounter = 1;
 
         // recursively create new nodes given a root file and return the new node's id
-        const Node *parse(std::string_view file, NodeType type = NodeType::LOCAL);
+        NodeId parse(std::string_view file, NodeType type = NodeType::LOCAL, NodeId parent = 0);
 
     public:
         Parser(std::string_view file);

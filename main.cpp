@@ -22,6 +22,7 @@ int main(int argc, char **argv)
 
     while (interface.isOpen()) {
         interface.draw();
+
         char c = getch();
         interface.charInput(c);
     }

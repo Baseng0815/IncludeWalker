@@ -1,24 +1,36 @@
 #include "graph.hpp"
 
+#include <stack>
+
 struct InterfaceNode {
-    const Node *graphNode;
+    const NodeId node;
     bool isCollapsed;
     int level;
 };
 
+struct HistoryEntry {
+    NodeId node;
+    int cursorPos;
+};
+
 class Interface {
     private:
+        std::stack<HistoryEntry> m_history;
         std::vector<InterfaceNode> m_interfaceNodes;
         Graph m_graph;
 
         bool m_isOpen = true;
         int m_cursorPos = 0;
 
-        void recalculateInterfaceNodes(std::string_view start);
-        void addInterfaceNodes(const Node *start, int level = 0);
+        void recalculateInterfaceNodes(NodeId root);
+        void addInterfaceNodes(NodeId start, int level = 0);
+
+        // returns -1 if not found
+        int prevInterfaceNodeIndex() const;
+        int nextInterfaceNodeIndex() const;
 
     public:
-        Interface(Graph&& graph);
+        Interface(Graph &&graph);
         ~Interface();
 
         void charInput(char c);
