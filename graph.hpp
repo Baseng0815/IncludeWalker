@@ -13,6 +13,7 @@ struct Node;
 
 using NodeId = unsigned int;
 using NodePtr = std::unique_ptr<Node>;
+using NodeRef = const Node*;
 
 enum class NodeType {
     LOCAL, SYSTEM
@@ -23,17 +24,16 @@ struct Node {
     NodeType nodeType;
     std::string nodeFile;
 
-    // TODO add multiple parents
-    NodeId parent;
-    std::vector<NodeId> children;
+    std::vector<NodeRef> children;
+    std::vector<NodeRef> parents;
 };
 
 struct Graph {
     public:
         std::vector<NodePtr> nodes;
 
-        const Node *getNodeByFile(std::string_view file) const;
-        const Node *getNodeById(NodeId id) const;
+        NodeRef getNodeByFile(std::string_view file) const;
+        NodeRef getNodeById(NodeId id) const;
 };
 
 class Parser {
@@ -43,8 +43,8 @@ class Parser {
         // each id is assigned a file
         NodeId m_idCounter = 1;
 
-        // recursively create new nodes given a root file and return the new node's id
-        NodeId parse(std::string_view file, NodeType type = NodeType::LOCAL, NodeId parent = 0);
+        // recursively create new nodes given a root file and return the new node
+        NodeRef parse(std::string_view file, NodeType type = NodeType::LOCAL, NodeRef parent = nullptr);
 
     public:
         Parser(std::string_view file);

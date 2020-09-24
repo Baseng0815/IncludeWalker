@@ -2,7 +2,7 @@
 
 #include <ncurses.h>
 
-void Interface::recalculateInterfaceNodes(NodeId root)
+void Interface::recalculateInterfaceNodes(NodeRef root)
 {
     m_interfaceNodes.clear();
 
@@ -10,25 +10,23 @@ void Interface::recalculateInterfaceNodes(NodeId root)
     clear();
 }
 
-void Interface::addInterfaceNodes(NodeId start, int level)
+void Interface::addInterfaceNodes(NodeRef start, int level)
 {
     m_interfaceNodes.emplace_back(InterfaceNode {start, false, level});
 
-    const Node *n = m_graph.getNodeById(start);
-    if (n->nodeType == NodeType::SYSTEM) {
+    if (start->nodeType == NodeType::SYSTEM) {
         return;
     }
 
-    for (const NodeId child : n->children) {
+    for (NodeRef child : start->children) {
         addInterfaceNodes(child, level + 1);
     }
 }
 
 int Interface::prevInterfaceNodeIndex() const
 {
-    NodeId parent = m_graph.getNodeById(m_interfaceNodes[m_cursorPos].node)->parent;
     for (int i = m_cursorPos - 1; i >= 0; i--) {
-        if (m_graph.getNodeById(m_interfaceNodes[i].node)->parent == parent) {
+        if (m_interfaceNodes[i].level == m_interfaceNodes[m_cursorPos].level) {
             return i;
         }
     }
@@ -38,9 +36,8 @@ int Interface::prevInterfaceNodeIndex() const
 
 int Interface::nextInterfaceNodeIndex() const
 {
-    NodeId parent = m_graph.getNodeById(m_interfaceNodes[m_cursorPos].node)->parent;
     for (int i = m_cursorPos + 1; i < m_interfaceNodes.size(); i++) {
-        if (m_graph.getNodeById(m_interfaceNodes[i].node)->parent == parent) {
+        if (m_interfaceNodes[i].level == m_interfaceNodes[m_cursorPos].level) {
             return i;
         }
     }
@@ -59,7 +56,7 @@ Interface::Interface(Graph &&graph)
     init_pair(1, COLOR_BLACK, COLOR_WHITE);
     move(0, 0);
 
-    recalculateInterfaceNodes(m_graph.nodes.back()->nodeId);
+    recalculateInterfaceNodes(m_graph.nodes.back().get());
 }
 
 Interface::~Interface()
@@ -101,10 +98,10 @@ void Interface::charInput(char c)
             break;
         case 'l':
             {
-                const Node *n = m_graph.getNodeById(m_interfaceNodes[m_cursorPos].node);
+                NodeRef n = m_interfaceNodes[m_cursorPos].node;
                 if (n->nodeType == NodeType::LOCAL) {
                     m_history.push(HistoryEntry {m_interfaceNodes.front().node, m_cursorPos});
-                    recalculateInterfaceNodes(n->nodeId);
+                    recalculateInterfaceNodes(n);
                     m_cursorPos = 0;
                 }
             }
@@ -134,7 +131,7 @@ void Interface::draw()
                 color_set(0, NULL);
             }
 
-            mvaddstr(y++, iNode.level * 2, m_graph.getNodeById(iNode.node)->nodeFile.c_str());
+            mvaddstr(y++, iNode.level * 2, iNode.node->nodeFile.c_str());
         }
     }
 }

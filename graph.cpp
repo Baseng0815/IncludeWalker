@@ -1,6 +1,6 @@
 #include "graph.hpp"
 
-const Node *Graph::getNodeByFile(std::string_view file) const {
+NodeRef Graph::getNodeByFile(std::string_view file) const {
     auto it = std::find_if(nodes.begin(), nodes.end(), [&](const NodePtr &node) {
         return node->nodeFile == file;
     });
@@ -13,7 +13,7 @@ const Node *Graph::getNodeByFile(std::string_view file) const {
     }
 }
 
-const Node *Graph::getNodeById(NodeId id) const {
+NodeRef Graph::getNodeById(NodeId id) const {
     auto it = std::find_if(nodes.begin(), nodes.end(), [&](const NodePtr &node) {
         return node->nodeId == id;
     });
@@ -26,14 +26,18 @@ const Node *Graph::getNodeById(NodeId id) const {
 }
 
 // recursively create new nodes given a root file and return the new node
-NodeId Parser::parse(std::string_view file, NodeType type, NodeId parent)
+NodeRef Parser::parse(std::string_view file, NodeType type, NodeRef parent)
 {
     // node already existing? return it
     const auto node = std::find_if(m_graph.nodes.begin(), m_graph.nodes.end(), [&](const NodePtr &node) {
         return node->nodeFile == file && node->nodeType == type; });
 
     if (node != m_graph.nodes.end()) {
-        return (*node)->nodeId;
+        // parent not already included? then add it
+        if (!std::count(node->get()->parents.begin(), node->get()->parents.end(), parent)) {
+            node->get()->parents.emplace_back(parent);
+        }
+        return node->get();
 
         // else, create new node
     } else {
@@ -41,7 +45,7 @@ NodeId Parser::parse(std::string_view file, NodeType type, NodeId parent)
         newNode->nodeFile = std::string {file};
         newNode->nodeType = type;
         newNode->nodeId = m_idCounter++;
-        newNode->parent = parent;
+        newNode->parents.emplace_back(parent);
 
         // only parse child includes of local files
         if (type == NodeType::LOCAL) {
@@ -70,7 +74,7 @@ NodeId Parser::parse(std::string_view file, NodeType type, NodeId parent)
                         } else {
                             start++;
                             line = line.substr(start, end - start);
-                            newNode->children.emplace_back(parse(line, NodeType::SYSTEM, newNode->nodeId));
+                            newNode->children.emplace_back(parse(line, NodeType::SYSTEM, newNode.get()));
                         }
                     } else {
                         start = line.find('"') + 1;
@@ -83,7 +87,7 @@ NodeId Parser::parse(std::string_view file, NodeType type, NodeId parent)
                             } else {
                                 start++;
                                 line = line.substr(0, end);
-                                newNode->children.emplace_back(parse(line, NodeType::LOCAL, newNode->nodeId));
+                                newNode->children.emplace_back(parse(line, NodeType::LOCAL, newNode.get()));
                             }
                         }
                     }
@@ -92,7 +96,7 @@ NodeId Parser::parse(std::string_view file, NodeType type, NodeId parent)
         }
 
         m_graph.nodes.emplace_back(std::move(newNode));
-        return m_graph.nodes.back()->nodeId;
+        return m_graph.nodes.back().get();
     }
 }
 

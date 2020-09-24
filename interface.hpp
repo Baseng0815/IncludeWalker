@@ -3,13 +3,13 @@
 #include <stack>
 
 struct InterfaceNode {
-    const NodeId node;
+    NodeRef node;
     bool isCollapsed;
     int level;
 };
 
 struct HistoryEntry {
-    NodeId node;
+    NodeRef node;
     int cursorPos;
 };
 
@@ -22,8 +22,8 @@ class Interface {
         bool m_isOpen = true;
         int m_cursorPos = 0;
 
-        void recalculateInterfaceNodes(NodeId root);
-        void addInterfaceNodes(NodeId start, int level = 0);
+        void recalculateInterfaceNodes(NodeRef root);
+        void addInterfaceNodes(NodeRef start, int level = 0);
 
         // returns -1 if not found
         int prevInterfaceNodeIndex() const;
